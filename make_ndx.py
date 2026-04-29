@@ -143,7 +143,7 @@ def main():
 
     groups = {}
     
-    for name, selection in args.group
+    for name, selection in args.group:
         try:
             ag = u.select_atoms(args.selection)
 
@@ -162,6 +162,8 @@ def main():
         else:
             # Raw MDAnalysis indexing (0-based)
             indices = [atom.index for atom in ag]
+
+        groups[name] = indices
 
     try:
         write_ndx(args.output, groups)
