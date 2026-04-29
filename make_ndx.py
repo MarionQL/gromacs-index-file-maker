@@ -39,11 +39,13 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--selection",
-        required=True,
+        "--group",
+        nargs=2,
+        action="append",
+        metavar=("NAME", "SELECTION"),
         help=(
-            "MDAnalysis selection string.\n"
-            "Example: 'segid MEMB and not resname CHL1'"
+            "Add an index group. Provide NAME and MDAnalysis selection.\n"
+            "Example: --group solu 'not resname TIP3'"
         )
     )
 
@@ -139,27 +141,28 @@ def main():
         print(f"[ERROR] Failed to load system:\n{e}", file=sys.stderr)
         sys.exit(1)
 
-    try:
-        ag = u.select_atoms(args.selection)
+    groups = {}
+    
+    for name, selection in args.group
+        try:
+            ag = u.select_atoms(args.selection)
 
-    except Exception as e:
-        print(f"[ERROR] Invalid selection string:\n{args.selection}", file=sys.stderr)
-        print(e, file=sys.stderr)
-        sys.exit(1)
+        except Exception as e:
+            print(f"[ERROR] Invalid selection for group '{name}' : {selection}", file=sys.stderr)
+            print(e, file=sys.stderr)
+            sys.exit(1)
 
-    if ag.n_atoms == 0:
-        print("[ERROR] Selection returned 0 atoms.", file=sys.stderr)
-        print(f"Selection: {args.selection}", file=sys.stderr)
-        sys.exit(1)
+        if ag.n_atoms == 0:
+            print("[ERROR] Group '{name}' returned 0 atoms.", file=sys.stderr)
+            sys.exit(1)
 
-    if args.one_based:
-        # Convert to GROMACS-compatible indexing
-        indices = [atom.index + 1 for atom in ag]
-    else:
-        # Raw MDAnalysis indexing (0-based)
-        indices = [atom.index for atom in ag]
+        if args.one_based:
+            # Convert to GROMACS-compatible indexing
+            indices = [atom.index + 1 for atom in ag]
+        else:
+            # Raw MDAnalysis indexing (0-based)
+            indices = [atom.index for atom in ag]
 
-    groups = {args.name: indices}
     try:
         write_ndx(args.output, groups)
 
@@ -168,8 +171,7 @@ def main():
         sys.exit(1)
 
     print(f"[OK] Wrote: {args.output}")
-    print(f"[INFO] Group name: {args.name}")
-    print(f"[INFO] Atom count: {len(indices)}")
+    print(f"[INFO] Groups written: {list(groups.keys())}")
     print(f"[INFO] Indexing: {'1-based (GROMACS)' if args.one_based else '0-based'}")
 
 if __name__ == "__main__":
